@@ -15,7 +15,7 @@ import {
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+// import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 // import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlinedIcon";
 import PersonAddAlt1OutlinedIcon from "@mui/icons-material/PersonAddAlt1Outlined";
 // import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
@@ -57,12 +57,12 @@ export default function Dashboard() {
         path: "/dashboard/userManagment",
         icon: <PersonAddAlt1OutlinedIcon sx={{ color: "black" }} />,
       },
-      {
-        id: "cluster",
-        label: "New Cluster",
-        path: "/dashboard/cluster",
-        icon: <GroupsOutlinedIcon sx={{ color: "black" }} />,
-      },
+      // {
+      //   id: "cluster",
+      //   label: "New Cluster",
+      //   path: "/dashboard/cluster",
+      //   icon: <GroupsOutlinedIcon sx={{ color: "black" }} />,
+      // },
       {
         id: "todayScanned",
         label: "Today scanned",
@@ -84,7 +84,7 @@ export default function Dashboard() {
     if (pathname.startsWith("/dashboard/userManagment")) return "userManagment";
     if (pathname.startsWith("/dashboard/today-scanned")) return "todayScanned";
     if (pathname.startsWith("/dashboard/report")) return "report";
-    if (pathname.startsWith("/dashboard/cluster")) return "cluster";
+    // if (pathname.startsWith("/dashboard/cluster")) return "cluster";
     return "overview";
   }, [pathname]);
 
