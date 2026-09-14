@@ -1,20 +1,14 @@
 import {
   Box,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
   CircularProgress,
-  Pagination,
   Stack,
   Alert,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 // import { BASE_URL } from "../config";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 
 const ROWS_PER_PAGE = 10;
@@ -31,7 +25,14 @@ export default function TodayScanned() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
+
+  const columns = [
+    { field: "user_name", headerName: "Full Name", flex: 1, minWidth: 150 },
+    { field: "id_number", headerName: "Employee ID", flex: 1, minWidth: 130 },
+    { field: "phone_number", headerName: "Phone number", flex: 1, minWidth: 150 },
+    { field: "cluster", headerName: "cluster", flex: 1, minWidth: 130 },
+    { field: "verified_at", headerName: "Scanned At", flex: 1, minWidth: 180 },
+  ];
 
   //dateformat
   const formatDateTime = (dateString) => {
@@ -82,7 +83,7 @@ export default function TodayScanned() {
           phone_number: s.phone_number || "N/A",
           id_number: s.id_number || "N/A",
           cluster: s.cluster || "N/A",
-          verified_at: s.verified_at || s.created_at || "-",
+          verified_at: formatDateTime(s.verified_at || s.created_at || "-"),
         }));
         console.log(normalized);
         if (active) setData(normalized);
@@ -100,15 +101,6 @@ export default function TodayScanned() {
     };
   }, [token]);
 
-  // paginations
-
-  const paginatedData = useMemo(() => {
-    return data.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE);
-  }, [data, page]);
-
-  // console.log("*****************paginated****************");
-  // console.log(paginatedData);
-  // console.log("*****************paginated****************");
   // ==========================
 
   return (
@@ -157,95 +149,26 @@ export default function TodayScanned() {
           </Box>
         )}
 
-        {/* TABLE */}
+        {/* DATAGRID */}
         {!error && data.length > 0 && (
-          <>
-            <TableContainer sx={{ mt: 1 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        ...outfitFont,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Full Name
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        ...outfitFont,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Employee ID
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...outfitFont,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Phone number
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...outfitFont,
-                        fontWeight: 700,
-                      }}
-                    >
-                      cluster
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        ...outfitFont,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Scanned At
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {paginatedData.map((row) => (
-                    <TableRow hover key={row.id}>
-                      <TableCell sx={outfitFont}>{row.user_name}</TableCell>
-
-                      <TableCell sx={outfitFont}>{row.id_number}</TableCell>
-                      <TableCell sx={outfitFont}>{row.phone_number}</TableCell>
-                      <TableCell sx={outfitFont}>{row.cluster}</TableCell>
-
-                      <TableCell sx={outfitFont}>
-                        {formatDateTime(row.verified_at)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* PAGINATION */}
-            <Stack
-              direction="row"
-              // justifyContent="space-between"
-              sx={{
-                padding: 1,
-                alignItems: "center",
-                // justifyContent: "center",
+          <Box sx={{ width: "100%", mt: 1 }}>
+            <DataGrid
+              autoHeight
+              rows={data}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: ROWS_PER_PAGE },
+                },
               }}
-            >
-              <Typography variant="caption">Total: {data.length}</Typography>
-
-              <Pagination
-                count={Math.ceil(data.length / ROWS_PER_PAGE)}
-                page={page}
-                onChange={(_, v) => setPage(v)}
-              />
-            </Stack>
-          </>
+              pageSizeOptions={[5, 10, 20]}
+              disableRowSelectionOnClick
+              sx={{
+                "& .MuiDataGrid-cell": outfitFont,
+                "& .MuiDataGrid-columnHeaders": { ...outfitFont, fontWeight: 700 },
+              }}
+            />
+          </Box>
         )}
       </Paper>
     </Box>

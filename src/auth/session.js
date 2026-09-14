@@ -4,6 +4,7 @@
 // import { BASE_URL } from "../config";
 // const API_BASE_URL = "http://192.168.1.79:5000";
 // const API_BASE_URL = BASE_URL;
+import apiClient from "../api/apiClient";
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 const TOKEN_KEY = "id_verify_token";
 
@@ -13,19 +14,9 @@ const TOKEN_KEY = "id_verify_token";
 
 export async function loginWithBackend(email, password) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/admins/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { success: false, error: data.message || "Login failed" };
-    }
+    const res = await apiClient.post(`/api/admins/login`, { email, password });
+    
+    const data = res.data;
 
     // ✅ Save token
     localStorage.setItem(TOKEN_KEY, data.token);
@@ -38,7 +29,7 @@ export async function loginWithBackend(email, password) {
     // console.error(error);
     return {
       success: false,
-      error: "Server error",
+      error: error.response?.data?.message || error.message || "Server error",
     };
   }
 }
@@ -83,19 +74,13 @@ export function isAuthenticated() {
 
 export async function fetchUsers(token) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/fetch`, {
+    const res = await apiClient.get(`/api/users/fetch`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch users");
-    }
-
-    return data;
+    return res.data;
   } catch (error) {
     // console.error(error);
     return [];
@@ -103,19 +88,13 @@ export async function fetchUsers(token) {
 }
 export async function fetchCount(token) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/history/today-scans`, {
+    const res = await apiClient.get(`/api/history/today-scans`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch users");
-    }
-
-    return data.count;
+    return res.data.count;
   } catch (error) {
     // console.error(error);
     return [];
@@ -138,35 +117,27 @@ export async function createUserBackend(form, token) {
     formData.append("photo", form.photoFile);
   }
 
-  const res = await fetch(`${API_BASE_URL}/api/users/register`, {
-    method: "POST",
-    // No Content-Type header for FormData
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
+  try {
+    const res = await apiClient.post(`/api/users/register`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Failed to create user");
+    return res.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message || "Failed to create user");
   }
-
-  return data;
 }
 
 export async function deleteUserBackend(id_number, token) {
-  const res = await fetch(`${API_BASE_URL}/api/users/${id_number}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const res = await apiClient.delete(`/api/users/${id_number}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Delete failed");
+    return res.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message || "Delete failed");
   }
-
-  return data;
 }
 
 // ==========================

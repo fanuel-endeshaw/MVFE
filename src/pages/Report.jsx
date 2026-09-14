@@ -5,21 +5,17 @@ import {
   Typography,
   Stack,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   CircularProgress,
   TextField,
   Pagination,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import apiClient from "../api/apiClient";
 
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -36,6 +32,19 @@ export default function Report() {
 
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+
+  const columns = [
+    { field: "full_name", headerName: "Full Name", flex: 1, minWidth: 150 },
+    { field: "id_number", headerName: "Employee ID", flex: 1, minWidth: 130 },
+    { field: "cluster", headerName: "Cluster", flex: 1, minWidth: 130 },
+    {
+      field: "phone_number",
+      headerName: "Phone Number",
+      flex: 1,
+      minWidth: 150,
+    },
+    { field: "verified_at", headerName: "Verified At", flex: 1, minWidth: 180 },
+  ];
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,7 +74,7 @@ export default function Report() {
       let endpoint = "";
 
       if (startDate) {
-        endpoint = `${apiBaseUrl}/api/history/scans-by-date-range?page=${page}&startDate=${startDate}`;
+        endpoint = `/api/history/scans-by-date-range?page=${page}&startDate=${startDate}`;
         if (endDate) {
           endpoint += `&endDate=${endDate}`;
         }
@@ -75,39 +84,29 @@ export default function Report() {
           setEndDate("");
           return;
         }
-        endpoint = `${apiBaseUrl}/api/history/all-scans/${page}`;
+        endpoint = `/api/history/all-scans/${page}`;
       }
 
-      const res = await fetch(endpoint, {
+      const res = await apiClient.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const result = await res.json();
+      const result = res.data;
 
-      if (!res.ok) {
-        throw new Error(result.message || "Failed to fetch report");
-      }
-
-      // console.log("time");
-      // console.log(result.users);
-      // console.log("time");
       const normalized = (result.users || []).map((r, i) => ({
         id: r.id || i,
         full_name: r.user_name || r.full_name || "Unknown",
         id_number: r.id_number || "N/A",
         cluster: r.cluster || "N/A",
-        verified_at: r.verified_at || r.created_at || null,
+        verified_at: formatDateTime(r.verified_at || r.created_at || null),
         phone_number: r.phone_number || "",
       }));
-      console.log("time");
-      console.log(normalized);
-      console.log("time");
       setData(normalized);
       setPages(result.pages || 1);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -130,15 +129,13 @@ export default function Report() {
       let allRows = [];
 
       if (startDate) {
-        let endpoint = `${apiBaseUrl}/api/report/download?startDate=${startDate}`;
+        let endpoint = `/api/report/download?startDate=${startDate}`;
         if (endDate) endpoint += `&endDate=${endDate}`;
 
-        const res = await fetch(endpoint, {
+        const res = await apiClient.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const result = await res.json();
-
-        if (!res.ok) throw new Error(result.message || "Export failed");
+        const result = res.data;
 
         allRows = (result.users || []).map((r, i) => ({
           No: i + 1,
@@ -152,13 +149,11 @@ export default function Report() {
         }));
       } else {
         for (let currentPage = 1; currentPage <= page; currentPage++) {
-          const endpoint = `${apiBaseUrl}/api/history/all-scans/${currentPage}`;
-          const res = await fetch(endpoint, {
+          const endpoint = `/api/history/all-scans/${currentPage}`;
+          const res = await apiClient.get(endpoint, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          const result = await res.json();
-
-          if (!res.ok) throw new Error(result.message || "Export failed");
+          const result = res.data;
 
           const normalized = (result.users || []).map((r, i) => ({
             No: allRows.length + i + 1,
@@ -200,100 +195,12 @@ export default function Report() {
 
       saveAs(file, fileName);
     } catch (err) {
-      alert(err.message);
+      alert(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  //MATCHED EXPORT: EXACT FORMAT MATCHING
-  // const exportGroupedByCluster = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError("");
-
-  //     let endpoint = `${apiBaseUrl}/api/history/grouped-by-cluster`;
-  //     const queryParams = [];
-  //     if (startDate) queryParams.push(`startDate=${startDate}`);
-  //     if (endDate) queryParams.push(`endDate=${endDate}`);
-  //     if (queryParams.length > 0) endpoint += `?${queryParams.join("&")}`;
-
-  //     const res = await fetch(endpoint, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const result = await res.json();
-
-  //     if (!res.ok)
-  //       throw new Error(result.message || "Failed to fetch cluster groupings");
-
-  //     const reportMatrix = [];
-
-  //     // Column Headers Row Matching Structure
-  //     reportMatrix.push([
-  //       "Full Name",
-  //       "Employee ID",
-  //       "Cluster",
-  //       "Phone Number",
-  //       "Verified At",
-  //     ]);
-
-  //     result.clusters.forEach((block) => {
-  //       block.records.forEach((row) => {
-  //         reportMatrix.push([
-  //           row.full_name,
-  //           row.id_number,
-  //           block.clusterName,
-  //           row.phone_number,
-  //           row.verified_at
-  //             ? new Date(row.verified_at).toLocaleString()
-  //             : "Not Verified",
-  //         ]);
-  //       });
-
-  //       // SubTotal matching format (SubTotal in Phone Number, count value in Verified At)
-  //       reportMatrix.push(["", "", "", "SubTotal", block.subtotal]);
-
-  //       // Empty spacer row line
-  //       reportMatrix.push(["", "", "", "", ""]);
-  //     });
-
-  //     // Grand Total matching format (Grand Total in Phone Number, aggregate count in Verified At)
-  //     reportMatrix.push(["", "", "", "Grand Total", result.grandTotal]);
-
-  //     const worksheet = XLSX.utils.aoa_to_sheet(reportMatrix);
-
-  //     worksheet["!cols"] = [
-  //       { wch: 30 }, // Full Name
-  //       { wch: 20 }, // Employee ID
-  //       { wch: 20 }, // Cluster
-  //       { wch: 20 }, // Phone Number
-  //       { wch: 28 }, // Verified At
-  //     ];
-
-  //     const workbook = XLSX.utils.book_new();
-  //     XLSX.utils.book_append_sheet(
-  //       workbook,
-  //       worksheet,
-  //       "Detailed Cluster Summary",
-  //     );
-
-  //     const excelBuffer = XLSX.write(workbook, {
-  //       bookType: "xlsx",
-  //       type: "array",
-  //     });
-  //     const fileBlob = new Blob([excelBuffer], {
-  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //     });
-
-  //     saveAs(fileBlob, "Detailed-Cluster-Report.xlsx");
-  //   } catch (err) {
-  //     alert(err.message || "Failed to generate cluster document summary.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // UPDATED EXPORT: CLUSTER SUMMARY WITH DYNAMIC FILENAME & DATE VALIDATION
   const exportGroupedByCluster = async () => {
     try {
       // Validate dates exactly like the default report view
@@ -305,19 +212,16 @@ export default function Report() {
       setLoading(true);
       setError("");
 
-      let endpoint = `${apiBaseUrl}/api/history/grouped-by-cluster`;
+      let endpoint = `/api/history/grouped-by-cluster`;
       const queryParams = [];
       if (startDate) queryParams.push(`startDate=${startDate}`);
       if (endDate) queryParams.push(`endDate=${endDate}`);
       if (queryParams.length > 0) endpoint += `?${queryParams.join("&")}`;
 
-      const res = await fetch(endpoint, {
+      const res = await apiClient.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const result = await res.json();
-
-      if (!res.ok)
-        throw new Error(result.message || "Failed to fetch cluster groupings");
+      const result = res.data;
 
       const reportMatrix = [];
 
@@ -388,7 +292,7 @@ export default function Report() {
 
       saveAs(fileBlob, exportFileName);
     } catch (err) {
-      alert(err.message || "Failed to generate cluster summary document.");
+      alert(err.response?.data?.message || err.message || "Failed to generate cluster summary document.");
     } finally {
       setLoading(false);
     }
@@ -480,7 +384,7 @@ export default function Report() {
 
             "& input::-webkit-datetime-edit-month-field, & input::-webkit-datetime-edit-day-field, & input::-webkit-datetime-edit-year-field, & input::-webkit-datetime-edit-text":
               {
-                color: startDate ? "inherit" : "transparent",
+                color: endDate ? "inherit" : "transparent",
               },
 
             "&:focus-within input::-webkit-datetime-edit-month-field, &:focus-within input::-webkit-datetime-edit-day-field, &:focus-within input::-webkit-datetime-edit-year-field, &:focus-within input::-webkit-datetime-edit-text":
@@ -526,6 +430,7 @@ export default function Report() {
 
         <Button
           variant="contained"
+          disabled={!data.length}
           onClick={exportGroupedByCluster}
           sx={{
             height: 56,
@@ -567,45 +472,22 @@ export default function Report() {
 
         {data.length > 0 && (
           <>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ ...outfitFont, fontWeight: 700 }}>
-                      Full Name
-                    </TableCell>
-                    <TableCell sx={{ ...outfitFont, fontWeight: 700 }}>
-                      Employee ID
-                    </TableCell>
-                    <TableCell sx={{ ...outfitFont, fontWeight: 700 }}>
-                      Cluster
-                    </TableCell>
-                    <TableCell sx={{ ...outfitFont, fontWeight: 700 }}>
-                      Phone Number
-                    </TableCell>
-                    <TableCell sx={{ ...outfitFont, fontWeight: 700 }}>
-                      Verified At
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={outfitFont}>{row.full_name}</TableCell>
-                      <TableCell sx={outfitFont}>{row.id_number}</TableCell>
-                      <TableCell sx={outfitFont}>{row.cluster}</TableCell>
-                      <TableCell sx={outfitFont}>{row.phone_number}</TableCell>
-                      <TableCell sx={outfitFont}>
-                        {/* {row.scanned_at
-                          ? new Date(row.scanned_at).toLocaleString()
-                          : "Not Verified"} */}
-                        {formatDateTime(row.verified_at)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <Box sx={{ width: "100%" }}>
+              <DataGrid
+                autoHeight
+                rows={data}
+                columns={columns}
+                hideFooter
+                disableRowSelectionOnClick
+                sx={{
+                  "& .MuiDataGrid-cell": outfitFont,
+                  "& .MuiDataGrid-columnHeaders": {
+                    ...outfitFont,
+                    fontWeight: 700,
+                  },
+                }}
+              />
+            </Box>
 
             <Stack direction="row" justifyContent="flex-end" sx={{ p: 1 }}>
               <Pagination

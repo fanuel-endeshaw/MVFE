@@ -125,14 +125,14 @@ export default function Overview() {
                   "linear-gradient(135deg, rgba(0, 77, 64, 0.06) 0%, rgba(0, 77, 64, 0.01) 100%)",
               },
               {
-                label: "Today Scans",
+                label: "Today Verified",
                 value: todayScans || 0,
                 icon: (
                   <QrCodeScannerOutlinedIcon
-                    sx={{ color: "#2e7d32", fontSize: 26 }}
+                    sx={{ color: "#004d40", fontSize: 26 }}
                   />
                 ),
-                accentColor: "#2e7d32",
+                accentColor: "#004d40",
                 bgGradient:
                   "linear-gradient(135deg, rgba(46, 125, 50, 0.06) 0%, rgba(46, 125, 50, 0.01) 100%)",
               },
