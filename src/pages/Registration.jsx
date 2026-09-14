@@ -343,6 +343,7 @@ export default function Registration() {
                 <TextField
                   label="Phone Number"
                   fullWidth
+                  required
                   value={form.phone_number}
                   onChange={handleChange("phone_number")}
                   inputProps={{ inputMode: "numeric", maxLength: 13 }}
