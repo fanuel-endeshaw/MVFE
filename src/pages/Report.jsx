@@ -490,6 +490,8 @@ export default function Report() {
                     ...outfitFont,
                     fontWeight: 700,
                   },
+                  "& .MuiDataGrid-virtualScroller": { overflowX: "hidden" },
+                  "& .MuiDataGrid-scrollbar--horizontal": { display: "none" },
                 }}
               />
             </Box>
