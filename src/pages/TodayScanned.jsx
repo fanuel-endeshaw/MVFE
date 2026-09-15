@@ -160,6 +160,8 @@ export default function TodayScanned() {
               sx={{
                 "& .MuiDataGrid-cell": outfitFont,
                 "& .MuiDataGrid-columnHeaders": { ...outfitFont, fontWeight: 700 },
+                "& .MuiDataGrid-virtualScroller": { overflowX: "hidden" },
+                "& .MuiDataGrid-scrollbar--horizontal": { display: "none" },
               }}
             />
           </Box>
