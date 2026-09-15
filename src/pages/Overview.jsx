@@ -92,7 +92,7 @@ export default function Overview() {
             fontWeight: 700,
           }}
         >
-          System Overview
+          SYSTEM OVERVIEW
         </Typography>
 
         {loading ? (
