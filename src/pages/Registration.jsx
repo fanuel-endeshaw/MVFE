@@ -92,6 +92,7 @@ export default function Registration() {
   // ==========================
   useEffect(() => {
     if (isEditMode && editUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         fullName: editUser.name || "",
         id_number: editUser.id_number || "",
@@ -251,6 +252,7 @@ export default function Registration() {
         });
       }
 
+      // eslint-disable-next-line no-unused-vars
       const data = res.data;
       alert(
         isEditMode
@@ -349,6 +351,7 @@ export default function Registration() {
                 <FormControl fullWidth disabled={clustersLoading}>
                   <InputLabel
                     id="cluster-select-label"
+                    required
                     shrink
                     sx={{ fontFamily: '"Outfit", sans-serif' }}
                   >

@@ -112,6 +112,7 @@ export default function Report() {
 
   useEffect(() => {
     fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, startDate, endDate]);
 
   const clearFilters = () => {
@@ -290,7 +291,11 @@ export default function Report() {
 
       saveAs(fileBlob, exportFileName);
     } catch (err) {
-      alert(err.response?.data?.message || err.message || "Failed to generate cluster summary document.");
+      alert(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to generate cluster summary document.",
+      );
     } finally {
       setLoading(false);
     }
