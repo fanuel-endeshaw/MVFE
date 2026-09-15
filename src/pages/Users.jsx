@@ -12,19 +12,13 @@ import {
   DialogTitle,
   IconButton,
   MenuItem,
-  Pagination,
   Paper,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import placeholder from "../assets/placeholder.png";
 
 import {
@@ -42,7 +36,6 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../auth/useAuth";
 import { useNavigate } from "react-router-dom";
 
-const USERS_PER_PAGE = 10;
 
 const normalizeUser = (s = {}) => ({
   ...s,
@@ -70,7 +63,6 @@ export default function Users() {
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
 
   const [sortBy, setSortBy] = useState("newest");
 
@@ -155,11 +147,6 @@ export default function Users() {
         return filtered;
     }
   }, [users, query, sortBy]);
-
-  const paginatedUsers = filteredUsers.slice(
-    (page - 1) * USERS_PER_PAGE,
-    page * USERS_PER_PAGE,
-  );
 
   const handleDelete = async (user) => {
     if (!window.confirm(`Delete ${user.name}?`)) return;
@@ -248,13 +235,13 @@ export default function Users() {
       </Stack>
 
       {/* SEARCH + SORT */}
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ my: 2 }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ my: 2 }} alignItems="center">
         <TextField
           placeholder="Search..."
+          size="small"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
-            setPage(1);
           }}
           sx={{ flex: 1 }}
           slotProps={{
@@ -266,10 +253,10 @@ export default function Users() {
 
         <TextField
           select
+          size="small"
           value={sortBy}
           onChange={(e) => {
             setSortBy(e.target.value);
-            setPage(1);
           }}
           sx={{ minWidth: 200 }}
         >
@@ -285,16 +272,13 @@ export default function Users() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => navigate("/dashboard/userManagment")}
-          // sx={{
-          //   background: "#004d40",
-          //   textTransform: "none",
-          // }}
           sx={{
             backgroundColor: "#004d40",
             fontFamily: '"Outfit", sans-serif',
             textTransform: "none",
-            py: 1.2,
-            fontSize: "1rem",
+            height: 40,
+            px: 2.5,
+            fontSize: "0.9rem",
             borderRadius: "8px",
             "&:hover": { backgroundColor: "#00332c" },
           }}
@@ -303,13 +287,8 @@ export default function Users() {
         </Button>
       </Stack>
 
-      {/* TABLE */}
-      <Paper
-        sx={{
-          borderRadius: 1,
-          overflow: "hidden",
-        }}
-      >
+      {/* DATAGRID */}
+      <Paper sx={{ borderRadius: 1, overflow: "hidden" }}>
         {loading ? (
           <Box sx={{ mt: 1, padding: 2, textAlign: "center" }}>
             <CircularProgress size={24} sx={{ color: "black" }} />
@@ -319,119 +298,64 @@ export default function Users() {
             {error}
           </Alert>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      ...outfitFont,
-                      fontWeight: 700,
-                    }}
-                  >
-                    User
-                  </TableCell>
-
-                  <TableCell sx={outfitFont}>Employee ID</TableCell>
-
-                  <TableCell sx={outfitFont}>Cluster</TableCell>
-                  <TableCell sx={outfitFont}>Phone Number</TableCell>
-
-                  <TableCell align="right" sx={outfitFont}>
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {paginatedUsers.map((user) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>
-                      <Stack
-                        direction="row"
-                        spacing={2}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <Avatar
-                          sx={{
-                            bgcolor: "#004d40",
-                            ...outfitFont,
-                          }}
-                        >
-                          {user.name[0]}
-                        </Avatar>
-
-                        <Typography
-                          sx={{
-                            ...outfitFont,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {user.name}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-
-                    <TableCell sx={outfitFont}>{user.id_number}</TableCell>
-
-                    {/* <TableCell sx={outfitFont}>Agriculture</TableCell> */}
-                    <TableCell sx={outfitFont}>{user?.cluster}</TableCell>
-                    <TableCell sx={outfitFont}>{user.phone_number}</TableCell>
-
-                    <TableCell align="right">
-                      <IconButton onClick={() => setSelectedUser(user)}>
-                        <ViewIcon />
-                      </IconButton>
-
-                      {/* ✅ UPDATE BUTTON */}
-                      <IconButton
-                        onClick={() => handleUpdate(user)}
-                        sx={{
-                          color: "#004d40",
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-
-                      <IconButton
-                        onClick={() => handleDelete(user)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        <Stack
-          direction="row"
-          sx={{
-            padding: 2,
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              ...outfitFont,
-              fontWeight: 500,
-              fontSize: 14,
+          <DataGrid
+            autoHeight
+            rows={filteredUsers}
+            disableRowSelectionOnClick
+            pageSizeOptions={[10, 20, 50]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10 } },
             }}
-          >
-            Total: {filteredUsers.length}
-          </Typography>
-
-          <Pagination
-            count={Math.ceil(filteredUsers.length / USERS_PER_PAGE)}
-            page={page}
-            onChange={(_, v) => setPage(v)}
+            columns={[
+              {
+                field: "name",
+                headerName: "User",
+                flex: 1,
+                minWidth: 180,
+                renderCell: ({ row }) => (
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", height: "100%", width: "100%" }}>
+                    <Avatar sx={{ bgcolor: "#004d40", ...outfitFont, width: 32, height: 32, fontSize: 14 }}>
+                      {row.name[0]}
+                    </Avatar>
+                    <Typography sx={{ ...outfitFont, fontWeight: 500, fontSize: 14 }}>
+                      {row.name}
+                    </Typography>
+                  </Stack>
+                ),
+              },
+              { field: "id_number", headerName: "Employee ID", flex: 1, minWidth: 130 },
+              { field: "cluster", headerName: "Cluster", flex: 1, minWidth: 130 },
+              { field: "phone_number", headerName: "Phone Number", flex: 1, minWidth: 140 },
+              {
+                field: "actions",
+                headerName: "Actions",
+                width: 130,
+                sortable: false,
+                align: "right",
+                headerAlign: "right",
+                renderCell: ({ row }) => (
+                  <>
+                    <IconButton size="small" onClick={() => setSelectedUser(row)}>
+                      <ViewIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleUpdate(row)} sx={{ color: "#004d40" }}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDelete(row)} color="error">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </>
+                ),
+              },
+            ]}
+            sx={{
+              "& .MuiDataGrid-cell": outfitFont,
+              "& .MuiDataGrid-columnHeaders": { ...outfitFont, fontWeight: 700 },
+              "& .MuiDataGrid-virtualScroller": { overflowX: "hidden" },
+              "& .MuiDataGrid-scrollbar--horizontal": { display: "none" },
+            }}
           />
-        </Stack>
+        )}
       </Paper>
 
       <Dialog
