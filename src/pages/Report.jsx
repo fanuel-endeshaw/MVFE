@@ -10,14 +10,12 @@ import {
   Pagination,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import apiClient from "../api/apiClient";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import apiClient from "../api/apiClient";
-
-const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
 const outfitFont = {
   fontFamily: '"Outfit", "Inter", "Segoe UI", sans-serif',
@@ -326,6 +324,7 @@ export default function Report() {
         <TextField
           label="Start Date"
           type="date"
+          size="small"
           value={startDate}
           onChange={(e) => {
             setPage(1);
@@ -362,6 +361,7 @@ export default function Report() {
         <TextField
           label="End Date"
           type="date"
+          size="small"
           value={endDate}
           onChange={(e) => {
             setPage(1);
@@ -400,7 +400,7 @@ export default function Report() {
           sx={{
             color: "black",
             borderColor: "black",
-            height: 56,
+            height: 40,
             textTransform: "none",
             fontWeight: 600,
             ...outfitFont,
@@ -419,7 +419,7 @@ export default function Report() {
           onClick={exportToExcel}
           disabled={!data.length}
           sx={{
-            height: 56,
+            height: 40,
             textTransform: "none",
             fontWeight: 600,
             ...outfitFont,
@@ -433,7 +433,7 @@ export default function Report() {
           disabled={!data.length}
           onClick={exportGroupedByCluster}
           sx={{
-            height: 56,
+            height: 40,
             backgroundColor: "#004d40",
             textTransform: "none",
             fontWeight: 600,

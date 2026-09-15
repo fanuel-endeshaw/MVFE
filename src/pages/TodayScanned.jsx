@@ -10,6 +10,7 @@ import { DataGrid } from "@mui/x-data-grid";
 // import { BASE_URL } from "../config";
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
+import apiClient from "../api/apiClient";
 
 const ROWS_PER_PAGE = 10;
 const outfitFont = {
@@ -59,23 +60,16 @@ export default function TodayScanned() {
       try {
         setLoading(true);
 
-        const res = await fetch(
-          // "http://192.168.1.79:5000/api/history/today-scans",
-          `${BASE_URL}/api/history/today-scans`,
+        const res = await apiClient.get(
+          `/api/history/today-scans`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          },
+          }
         );
 
-        const result = await res.json();
-
-        // console.log(result);
-
-        if (!res.ok) {
-          throw new Error(result.message || "Failed to fetch");
-        }
+        const result = res.data;
 
         const normalized = (result.users || result || []).map((s, i) => ({
           id: s.id || i,
@@ -88,7 +82,7 @@ export default function TodayScanned() {
         console.log(normalized);
         if (active) setData(normalized);
       } catch (err) {
-        if (active) setError(err.message);
+        if (active) setError(err.response?.data?.message || err.message);
       } finally {
         if (active) setLoading(false);
       }

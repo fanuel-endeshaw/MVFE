@@ -40,17 +40,13 @@ export default function NewCluster() {
       // Add authentication token headers if your verifyAdmin middleware checks authorization headers
       // const token = localStorage.getItem("token");
 
-      const response = await fetch(`${API_BASE_URL}/users/clusters`, {
+      const response = await apiClient.get(`/api/users/clusters`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch cluster lists.");
-      }
+      const data = response.data;
 
       // Maps your backend response: { message: "...", clusters: [...] }
       setClusters(data.clusters || []);
@@ -83,21 +79,13 @@ export default function NewCluster() {
       // const token = localStorage.getItem("token");
 
       // Payload maps directly to your backend controller structural expectation: { cluster_name }
-      const response = await fetch(`${API_BASE_URL}/users/clusters`, {
-        method: "POST",
+      const response = await apiClient.post(`/api/users/clusters`, { cluster_name: cleanName }, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ cluster_name: cleanName }),
       });
-      console.log(cleanName);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong while saving.");
-      }
+      const data = response.data;
 
       setSuccess(`Successfully registered ${cleanName}!`);
       setClusterName(""); // Clear field on success
@@ -105,8 +93,7 @@ export default function NewCluster() {
       // Refresh the UI list with latest database rows
       fetchAvailableClusters();
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setIsLoading(false);
     }

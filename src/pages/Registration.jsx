@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
+import apiClient from "../api/apiClient";
 
 export default function Registration() {
   const apiBaseUrl = import.meta.env.VITE_BASE_URL;
@@ -58,19 +59,13 @@ export default function Registration() {
     const fetchClusters = async () => {
       setClustersLoading(true);
       try {
-        const res = await fetch(`${apiBaseUrl}/api/users/clusters`, {
-          method: "GET",
+        const res = await apiClient.get(`/api/users/clusters`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to load clusters: ${res.status}`);
-        }
-
-        const data = await res.json();
+        const data = res.data;
 
         // Ensure data maps cleanly to an array structure.
         // Adjust if your API returns the array wrapped inside an object property like data.clusters
@@ -242,24 +237,21 @@ export default function Registration() {
       payload.append("photo_url", form.photo ? editUser?.photo_url || "" : "");
 
       const endpoint = isEditMode
-        ? `${apiBaseUrl}/api/users/update/${id}`
-        : `${apiBaseUrl}/api/users/register`;
+        ? `/api/users/update/${id}`
+        : `/api/users/register`;
 
-      const method = isEditMode ? "PUT" : "POST";
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: payload,
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Request failed");
+      let res;
+      if (isEditMode) {
+        res = await apiClient.put(endpoint, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        res = await apiClient.post(endpoint, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
+
+      const data = res.data;
       alert(
         isEditMode
           ? "User updated successfully!"
@@ -267,7 +259,7 @@ export default function Registration() {
       );
       navigate("/dashboard/users");
     } catch (err) {
-      setRegistrationError(err.message);
+      setRegistrationError(err.response?.data?.message || err.message);
     } finally {
       setRegistrationLoading(false);
     }

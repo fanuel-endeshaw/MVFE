@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContextCore";
 import { jwtDecode } from "jwt-decode";
 // import { BASE_URL } from "../config";
+import apiClient from "../api/apiClient";
 
 export const AuthProvider = ({ children }) => {
   const api_base_url = import.meta.env.VITE_BASE_URL;
@@ -32,18 +33,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // const res = await fetch("http://192.168.1.79:5000/api/admins/login", {
-      const res = await fetch(`${api_base_url}/api/admins/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return { success: false, error: data.message };
-      }
+      const res = await apiClient.post(`/api/admins/login`, { email, password });
+      const data = res.data;
 
       localStorage.setItem("token", data.token);
       setToken(data.token);
@@ -51,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.message || "Login failed." };
+      return { success: false, error: err.response?.data?.message || err.message || "Login failed." };
     }
   };
 
